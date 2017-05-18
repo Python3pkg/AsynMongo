@@ -1,1 +1,1 @@
-from AsynMongo import Collection
+from .AsynMongo import Collection

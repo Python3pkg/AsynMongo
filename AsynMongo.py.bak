@@ -43,7 +43,7 @@ col.close()
 """
 
 from pymongo import MongoClient
-from .QueueManager import QueueManager
+from QueueManager import QueueManager
 import simplejson as json
 import bson
 import threading
@@ -67,7 +67,7 @@ class Borg(object):
 
 def hash_object(ob):
     ob_hash_dict = dict()
-    for k,v in list(ob.__dict__.items()):
+    for k,v in ob.__dict__.items():
         ob_hash_dict[k] = hashlib.sha1(str(v)).hexdigest()
     return ob_hash_dict
 
@@ -95,7 +95,7 @@ class Collection(object):
             try:
                 self.queue = self.QM.Queue(queue_type=queue, **kwargs)
             except Exception as e:
-                print("queue type: `python_queue`, `redis_queue`")
+                print "queue type: `python_queue`, `redis_queue`"
                 import traceback
                 traceback.print_exc()
         self.asyn_collection = None
@@ -256,7 +256,7 @@ class Collection(object):
             self._run_last()
             size = self._get_size()
 
-            for i in range(size):
+            for i in xrange(size):
                 try:
                     item = self.queue.get(timeout=self.timeout)
 
@@ -320,7 +320,7 @@ def main():
 
     # 同步插入对象
     col.insert(man())
-    print("insert ok!")
+    print "insert ok!"
 
     # 查询
     dict1 = {"name" : "bob"}
@@ -339,13 +339,13 @@ def main():
     else:
         pass
 
-    print("update ok!")
+    print "update ok!"
 
 
     # 异步插入对象
-    for i in range(1000):
+    for i in xrange(1000):
         col.insert_asyn(man(), lsize=200, timeout=5)  # 插入对象, lsize为粒度大小, 默认50; 空队列等待5s, 默认60s
-    print("asyn insert ok!")
+    print "asyn insert ok!"
 
     col.set_collection(client = client, db = "test", collection= 'woman')  # 申明数据库， ip, 端口，col名称，collection名称
     #异步更新
@@ -358,10 +358,10 @@ def main():
         else:
             pass
 
-    print("asyn update ok!")
+    print "asyn update ok!"
 
     col.close() #异步不等待空队列，直接关闭
-    print("finished")
+    print "finished"
 
 
 if __name__ == "__main__":

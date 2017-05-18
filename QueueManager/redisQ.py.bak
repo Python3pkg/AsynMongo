@@ -17,7 +17,7 @@ add function qsize, put_left
 from functools import wraps
 import uuid
 try:
-    import pickle as pickle
+    import cPickle as pickle
 except ImportError:
     import pickle
 
@@ -67,7 +67,7 @@ class RedisQ(object):
         return key_for_name(self.name)
 
     def keys(self):
-        return list(self.__redis.keys())
+        return self.__redis.keys()
 
     def qsize(self):
         return self.__redis.llen(self.key)
@@ -97,7 +97,7 @@ class RedisQ(object):
                     break
                 yield msg
         except KeyboardInterrupt:
-            print(); return
+            print; return
 
     def get(self, block=False, timeout=None):
         """Return a message from the queue. Example:
@@ -138,7 +138,7 @@ class RedisQ(object):
         >>> queue.put("my message", "another message", "third message")
         """
         if self.serializer is not None:
-            msgs = list(map(self.serializer.dumps, msgs))
+            msgs = map(self.serializer.dumps, msgs)
 
         self.put_size += 1
         self.__redis.rpush(self.key, *msgs)
@@ -154,7 +154,7 @@ class RedisQ(object):
         123
         '''
         if self.serializer is not None:
-            msgs = list(map(self.serializer.dumps, msgs))
+            msgs = map(self.serializer.dumps, msgs)
         self.put_size += 1
         self.__redis.lpush(self.key, *msgs)
 

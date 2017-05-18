@@ -9,13 +9,13 @@
 提供了一个QueueManager类，管理队列，并提供http接口。
 '''
 
-from BaseHTTPServer import HTTPServer, BaseHTTPRequestHandler
-import urlparse
+from http.server import HTTPServer, BaseHTTPRequestHandler
+import urllib.parse
 import threading
-from PythonQueue import PythonQueue
+from .PythonQueue import PythonQueue
 try:
     import redis
-    from redisQ import RedisQ
+    from .redisQ import RedisQ
     redis_enable = True
 except ImportError:
     redis_enable = False
@@ -196,7 +196,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
 
     def do_GET(self):
         self.protocal_version = "HTTP/1.1"
-        path = urlparse.urlparse(self.path)
+        path = urllib.parse.urlparse(self.path)
         if path.path == '/qsize':
             query = path.query.split("=")
             if len(query) == 2:
@@ -228,7 +228,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
         elif path.path == '/all_get_put_size':
             QM = QueueManager()
             return_list = []
-            for name in QM.all_queues().keys():
+            for name in list(QM.all_queues().keys()):
                 json1 = {
                     "name" :  name,
                     "get_size" : QM.get_size(name),
@@ -241,7 +241,7 @@ class HTTPHandler(BaseHTTPRequestHandler):
         elif path.path == '/all_qsizes':
             QM = QueueManager()
             return_list = []
-            for name in QM.all_queues().keys():
+            for name in list(QM.all_queues().keys()):
                 json1 = {
                     "name" :  name,
                     "qsize" : QM.qsize(name)
@@ -263,7 +263,7 @@ http_server = None
 
 def start_server(host, port):
     global http_server
-    print "http://%s:%d/ is open." % (host, port)
+    print("http://%s:%d/ is open." % (host, port))
     http_server = HTTPServer((host, port), HTTPHandler)
     http_server.serve_forever() #设置一直监听并接收请求
 
@@ -284,12 +284,12 @@ class QueueManager(object):
         if queue_type == "redis_queue" and redis_enable == False:
             raise RedisImportException
 
-        if name in self.queue_dict.keys(): #存在队列即返回
+        if name in list(self.queue_dict.keys()): #存在队列即返回
             return self.queue_dict[name]
         else: #不存在队列即创建
             if not name: #默认的name为队列类型加递增值
                 max_name_id = 0
-                if self.queue_name_counter.has_key(queue_type):
+                if queue_type in self.queue_name_counter:
                     name = queue_type + str(self.queue_name_counter[queue_type] + 1)
                     self.queue_name_counter[queue_type] += 1
                 else:
@@ -308,10 +308,10 @@ class QueueManager(object):
         if not redis_enable:
             raise RedisImportException
         redis = redis.Redis(host = host, port = port, **kwargs)
-        for key in redis.keys():
+        for key in list(redis.keys()):
             if name[:11] == "redis_queue":
                 self.queue_dict[key] = RedisQ(key, **kwargs)
-                if self.queue_name_counter.has_key(queue_type):
+                if queue_type in self.queue_name_counter:
                     self.queue_name_counter["redis_queue"] += 1
                 else:
                     self.queue_name_counter["redis_queue"] = 0
@@ -321,38 +321,38 @@ class QueueManager(object):
         return self.queue_dict
 
     def key(self, name): #返回队列名称
-        if self.queue_dict.has_key(name):
+        if name in self.queue_dict:
             return self.queue.key()
         else:
             return None
 
     def remove(self, queue_object=None, name = None): #删除队列
         if (not queue_object) and (not name): #默认清空队列字典
-            for queue in self.queue_dict.values():
+            for queue in list(self.queue_dict.values()):
                 queue = None
             self.queue_dict = dict()
-        elif queue_object in self.queue_dict.values(): #根据队列对象清除
+        elif queue_object in list(self.queue_dict.values()): #根据队列对象清除
             del self.queue_dict[queue_object.name]
-        elif name in self.queue_dict.keys(): #根据队列名称清除
+        elif name in list(self.queue_dict.keys()): #根据队列名称清除
             del self.queue_dict[name]
         else:
             raise Exception("queue error")
 
 
     def qsize(self, name): #获取队列长度
-        if self.queue_dict.has_key(name):
+        if name in self.queue_dict:
             return self.queue_dict[name].qsize()
         else:
             raise Exception("No queue %s" % name)
 
     def put_size(self, name): #获取put_size
-        if self.queue_dict.has_key(name):
+        if name in self.queue_dict:
             return self.queue_dict[name].put_size
         else:
             raise Exception("No queue %s" % name)
 
     def get_size(self, name): #获取put_size
-        if self.queue_dict.has_key(name):
+        if name in self.queue_dict:
             return self.queue_dict[name].get_size
         else:
             raise Exception("No queue %s" % name)

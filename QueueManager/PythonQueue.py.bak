@@ -5,7 +5,7 @@
 # Author  : Victor Lin
 # Email    : linxianwusx@gmail.com
 ###############
-from queue import Queue
+from Queue import Queue
 
 class PythonQueue(Queue):
     def __init__(self, name, maxsize = 0):
